@@ -430,13 +430,13 @@ impl App {
 
             Action::CopyOutput => {
                 if let Some(content) = self.get_content(ContentType::Raw) {
-                    tmux::copy_to_clipboard(&content)?;
+                    tmux::copy_to_tmux_buffer(&content)?;
                     return Ok(UpdateResult::Quit);
                 }
             }
             Action::CopyFull => {
                 if let Some(content) = self.get_content(ContentType::Full) {
-                    tmux::copy_to_clipboard(&content)?;
+                    tmux::copy_to_tmux_buffer(&content)?;
                     return Ok(UpdateResult::Quit);
                 }
             }
@@ -445,7 +445,7 @@ impl App {
                 if self.mode == Mode::Commands
                     && let Some(cmd) = self.get_command_payload()
                 {
-                    tmux::copy_to_clipboard(&cmd)?;
+                    tmux::copy_to_tmux_buffer(&cmd)?;
                     return Ok(UpdateResult::Quit);
                 }
             }
@@ -454,7 +454,7 @@ impl App {
                 if self.mode == Mode::Commands
                     && let Some(debug) = self.get_selected_debug()
                 {
-                    tmux::copy_to_clipboard(&debug)?;
+                    tmux::copy_to_tmux_buffer(&debug)?;
                     return Ok(UpdateResult::Quit);
                 }
             }
@@ -478,7 +478,7 @@ impl App {
                     _ => ContentType::Raw,
                 };
                 if let Some(content) = self.get_content(content_type) {
-                    tmux::copy_to_clipboard(&content)?;
+                    tmux::copy_to_tmux_buffer(&content)?;
                     return Ok(UpdateResult::Quit);
                 }
             }

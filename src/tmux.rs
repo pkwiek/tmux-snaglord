@@ -1,7 +1,9 @@
 //! Interface for tmux commands
 
 use anyhow::{Context, Result};
+use std::io::Write;
 use std::process::Command;
+use std::process::Stdio;
 
 /// Special target identifier for the previous (last active) pane
 const PREVIOUS_PANE_TARGET: &str = "previous";
@@ -22,6 +24,39 @@ fn run_tmux(args: &[&str]) -> Result<String> {
     }
 
     String::from_utf8(output.stdout).context("tmux output contained invalid UTF-8")
+}
+
+/// Run a tmux command while piping UTF-8 input to stdin.
+fn run_tmux_with_input(args: &[&str], input: &str) -> Result<()> {
+    let mut child = Command::new("tmux")
+        .args(args)
+        .stdin(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .context(format!(
+            "Failed to execute tmux {}",
+            args.first().unwrap_or(&"")
+        ))?;
+
+    if let Some(stdin) = child.stdin.as_mut() {
+        stdin
+            .write_all(input.as_bytes())
+            .context("Failed to write tmux buffer contents")?;
+    }
+
+    let output = child
+        .wait_with_output()
+        .context(format!("Failed to wait for tmux {}", args.first().unwrap_or(&"")))?;
+
+    if !output.status.success() {
+        anyhow::bail!(
+            "tmux {} failed: {}",
+            args.first().unwrap_or(&""),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    Ok(())
 }
 
 /// Get the pane ID of the previous (last active) pane in the current window.
@@ -104,11 +139,8 @@ pub fn list_panes() -> Result<Vec<String>> {
         .collect())
 }
 
-/// Copy content to system clipboard (cross-platform)
-pub fn copy_to_clipboard(content: &str) -> Result<()> {
-    let mut clipboard = arboard::Clipboard::new().context("Failed to access clipboard")?;
-    clipboard
-        .set_text(content)
-        .context("Failed to copy to clipboard")?;
-    Ok(())
+/// Copy content into the tmux paste buffer.
+pub fn copy_to_tmux_buffer(content: &str) -> Result<()> {
+    run_tmux_with_input(&["load-buffer", "-"], content)
+        .context("Failed to copy to tmux buffer")
 }

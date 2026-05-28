@@ -23,13 +23,13 @@ pub enum Action {
     SearchInput(char),
     /// Delete last character in search query
     SearchBackspace,
-    /// Copy output to clipboard
+    /// Copy output to the tmux paste buffer
     CopyOutput,
-    /// Copy command + output to clipboard
+    /// Copy command + output to the tmux paste buffer
     CopyFull,
-    /// Copy command only to clipboard
+    /// Copy command only to the tmux paste buffer
     CopyCommand,
-    /// Copy debug info to clipboard
+    /// Copy debug info to the tmux paste buffer
     CopyDebug,
     /// Toggle selection of the current item for scratchpad
     ToggleSelection,
